@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style>
+		body {
+		    font: 11px sans-serif;
+		}
+		
+		.axis path,
+		.axis line {
+		    fill: none;
+		    stroke: #000;
+		    shape-rendering: crispEdges;
+		}
+		.tooltip {
+		  	position: absolute;					
+		    width: 200px;					
+		    height: 38px;					
+		    padding: 2px;				
+		    font: 12px sans-serif;		
+		    background: #eee;	
+		    box-shadow: 0 0 5px #999999;
+		    border: 0px;				
+		    pointer-events: none;		
+		}
+	</style>
+</head>
+<body>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script>
+		var margin = {
+	            top: 10,
+	            right: 30,
+	            bottom: 30,
+	            left: 200
+	        },
+	        width = 960 - margin.left - margin.right,
+	        height = 500 - margin.top - margin.bottom,
+	        padding = 100;
+
+	    var parseDate = d3.time.format("%m/%d/%Y %I:%M").parse;
+	    var formatDate = d3.time.format("%m/%d");
+	    var formatDateTime = d3.time.format("%d/%m/%Y %I:%M %p");
+
+        var color = d3.scale.category10();
+
+        var xValue = function(d) { return formatDateTime(d.lastLogin);},
+        	xScale = d3.time.scale().range([0, width]),
+        	xMap = function(d) { return xScale(new Date(d.lastLogin));},
+        	xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(formatDate);
+
+    	var	yValue = function(d) { return d.org;},
+    		yScale = d3.scale.ordinal().rangeRoundBands([0,height], .1),
+    		yMap = function(d) { return yScale(d.org);},
+    		yAxis = d3.svg.axis().scale(yScale).orient("left").tickSize(0);
+
+	    var svg = d3.select("body").append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	    var tooltip = d3.select("body").append("div")
+		    .attr("class", "tooltip")
+		    .style("opacity", 0);
+
+	    d3.csv("data/t2b.csv", function(data){
+	    	data.forEach(function(d){
+	    		d.lastLogin = parseDate(d.lastLogin);
+	    		d.org = d.org;
+	    	});
+		
+		//data.sort(function(a,b){return b.lastLogin-a.lastLogin;});
+
+    	yScale.domain(data.map(yValue));
+    	xScale.domain(d3.extent(data, function(d) { return d.lastLogin; }));
+
+    	svg.append("g")
+		    .attr("class", "x axis")
+		    .attr("transform", "translate(0," + height + ")")
+		    .call(xAxis)
+	       .append("text")
+	       	.attr("class", "label")
+	       	.attr("x", width)
+	       	.attr("y", -6)
+	       	.style("text-anchor", "end")
+	       	.text("Last Login");
+
+	    svg.append("g")
+		    .attr("class", "y axis")
+		    .call(yAxis)
+		   .append("text")
+		    .attr("class", "label")
+		    .attr("transform", "rotate(-90)")
+		    .attr("y", 6)
+		    .attr("dy", ".71em")
+		    .style("text-anchor", "end")
+		    .text("Umoja T2b Service Organization");
+
+
+	    svg.selectAll(".dot")
+	      .data(data)
+	    .enter().append("circle")
+	      .attr("class", "dot")
+	      .attr("r", 3.5)
+	      .attr("cx", xMap)
+	      .attr("cy", yMap)
+	      .style("fill", function(d) { return color(d.org); })
+	      .on("mouseover", function(d) {
+	          tooltip.transition()
+	               .duration(200)
+	               .style("opacity", .9);
+	          tooltip.html(d.firstName + " " + d.lastName + "<br/> " + yValue(d) 
+		        + "<br/> " + xValue(d) )
+	               .style("left", (d3.event.pageX + 5) + "px")
+	               .style("top", (d3.event.pageY - 28) + "px");
+	      })
+	      .on("mouseout", function(d) {
+	          tooltip.transition()
+	               .duration(500)
+	               .style("opacity", 0);
+	      });
+	      /*
+	      // draw legend
+		  var legend = svg.selectAll(".legend")
+		      .data(color.domain())
+		    .enter().append("g")
+		      .attr("class", "legend")
+		      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+		  // draw legend colored rectangles
+		  legend.append("rect")
+		      .attr("x", width - 18)
+		      .attr("width", 18)
+		      .attr("height", 18)
+		      .style("fill", color);
+
+		  // draw legend text
+		  legend.append("text")
+		      .attr("x", width - 24)
+		      .attr("y", 9)
+		      .attr("dy", ".35em")
+		      .style("text-anchor", "end")
+		      .text(function(d) { return d;})
+	     	*/
+
+	    });
+
+	    
+
+	    //
+
+
+
+	</script>
+
+</body>
+</html>
